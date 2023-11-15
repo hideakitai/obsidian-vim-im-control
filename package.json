@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-vim-im-control",
 	"version": "0.1.0",
-	"description": "Obsidian plugin to switch Input Method when `InsertLeave` and `InsertEnter`. Supports macOS, Windows, and Linux.",
+	"description": "Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supports macOS, Windows, and Linux.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

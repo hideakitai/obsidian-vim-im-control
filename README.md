@@ -1,6 +1,6 @@
 # Vim IM Control for Obsidian
 
-Obsidian plugin to switch Input Method when "InsertLeave" and "InsertEnter". Supports macOS, Windows, and Linux.
+Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supports macOS, Windows, and Linux.
 
 ## Usage
 
