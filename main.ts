@@ -308,7 +308,6 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl("h1", { text: "Vim IM Control Settings" });
 		new Setting(containerEl).setDesc(
 			"You can set the following four settings for each platform. \
 			If you want to use the `InsertEnter` command, \
@@ -342,9 +341,9 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 			DEFAULT_SETTINGS.linux
 		);
 
-		containerEl.createEl("h3", { text: "Async Switch" });
+		containerEl.createEl("h3", { text: "Common" });
 		new Setting(containerEl)
-			.setName("Async Switch")
+			.setName("Async switch")
 			.setDesc("Whether to switch IM asynchronously or not")
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.isAsync);
@@ -355,9 +354,8 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 				});
 			});
 
-		containerEl.createEl("h3", { text: "Status Bar Message" });
 		new Setting(containerEl)
-			.setName("Status Bar Message")
+			.setName("Status bar message")
 			.setDesc("Whether to show ERROR/WARN messages on Status Bar")
 			.addToggle((toggle) => {
 				toggle.setValue(this.plugin.settings.isStatusBarEnabled);
