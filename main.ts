@@ -62,9 +62,9 @@ export default class VimImSwitcher extends Plugin {
 
 		// Register two events because:
 		// this don't trigger on loading/reloading obsidian with note opened
-		// this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent);
+		// this.registerEvent(this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent));
 		// and this don't trigger on opening same file in new pane
-		this.app.workspace.on("file-open", this.registerWorkspaceEvent);
+		this.registerEvent(this.app.workspace.on("file-open", this.registerWorkspaceEvent));
 	}
 
 	private async initialize() {
