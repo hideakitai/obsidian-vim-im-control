@@ -51,6 +51,7 @@ export default class VimImSwitcher extends Plugin {
 	private isInitialized = false;
 	private imToRestore = "";
 	private prevVimMode = "normal";
+	private editorSet = new Set<CodeMirror.Editor>();
 
 	async onload() {
 		await this.loadSettings();
@@ -62,7 +63,7 @@ export default class VimImSwitcher extends Plugin {
 
 		// Register two events because:
 		// this don't trigger on loading/reloading obsidian with note opened
-		// this.registerEvent(this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent));
+		this.registerEvent(this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent));
 		// and this don't trigger on opening same file in new pane
 		this.registerEvent(this.app.workspace.on("file-open", this.registerWorkspaceEvent));
 	}
@@ -118,6 +119,9 @@ export default class VimImSwitcher extends Plugin {
 		if (!editor) {
 			return;
 		}
+		if (this.editorSet.has(editor)) {
+			return;
+		}
 
 		// run commands when vim mode has changed
 		editor.on("vim-mode-change", (modeObj: any) => {
@@ -125,6 +129,7 @@ export default class VimImSwitcher extends Plugin {
 				this.onVimModeChanged(modeObj);
 			}
 		});
+		this.editorSet.add(editor);
 		console.debug("vim-mode-change event registered");
 	}
 
