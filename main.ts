@@ -51,7 +51,7 @@ export default class VimImSwitcher extends Plugin {
 	private isInitialized = false;
 	private imToRestore = "";
 	private prevVimMode = "normal";
-	private editorSet = new Set<CodeMirror.Editor>();
+	private editorSet = new WeakSet<CodeMirror.Editor>();
 
 	async onload() {
 		await this.loadSettings();
