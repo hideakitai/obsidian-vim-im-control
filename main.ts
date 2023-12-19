@@ -51,7 +51,7 @@ export default class VimImSwitcher extends Plugin {
 	private isInitialized = false;
 	private imToRestore = "";
 	private prevVimMode = "normal";
-	private editorSet = new Set<CodeMirror.Editor>();
+	private editorSet = new WeakSet<CodeMirror.Editor>();
 
 	async onload() {
 		await this.loadSettings();
@@ -63,9 +63,13 @@ export default class VimImSwitcher extends Plugin {
 
 		// Register two events because:
 		// this don't trigger on loading/reloading obsidian with note opened
-		this.registerEvent(this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent));
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", this.registerWorkspaceEvent),
+		);
 		// and this don't trigger on opening same file in new pane
-		this.registerEvent(this.app.workspace.on("file-open", this.registerWorkspaceEvent));
+		this.registerEvent(
+			this.app.workspace.on("file-open", this.registerWorkspaceEvent),
+		);
 	}
 
 	private async initialize() {
@@ -161,9 +165,7 @@ export default class VimImSwitcher extends Plugin {
 	}
 
 	private isOnInsertEnterEnabled() {
-		return (
-			!!this.setting.cmdOnInsertEnter && !!this.setting.cmdGetCurrentIM
-		);
+		return !!this.setting.cmdOnInsertEnter && !!this.setting.cmdGetCurrentIM;
 	}
 
 	private isOnInsertLeaveEnabled() {
@@ -178,7 +180,7 @@ export default class VimImSwitcher extends Plugin {
 
 		const enableCommand = this.setting.cmdOnInsertEnter.replace(
 			/{{im}}/,
-			this.imToRestore
+			this.imToRestore,
 		);
 
 		if (this.settings.isAsync) {
@@ -200,28 +202,22 @@ export default class VimImSwitcher extends Plugin {
 
 		if (this.isOnInsertEnterEnabled()) {
 			// if onInsertEnter is enabled, we need to get current IM first
-			this.runCommandAsync(this.setting.cmdGetCurrentIM).then(
-				(stdout: any) => {
-					this.imToRestore = stdout;
-					console.debug(`im cached: ${this.imToRestore}`);
+			this.runCommandAsync(this.setting.cmdGetCurrentIM).then((stdout: any) => {
+				this.imToRestore = stdout;
+				console.debug(`im cached: ${this.imToRestore}`);
 
-					// then run onInsertLeave command
-					this.runCommandAsync(this.setting.cmdOnInsertLeave).then(
-						(_stdout: any) => {
-							console.debug(
-								`im switched by ${this.setting.cmdOnInsertLeave}`
-							);
-						}
-					);
-				}
-			);
+				// then run onInsertLeave command
+				this.runCommandAsync(this.setting.cmdOnInsertLeave).then(
+					(_stdout: any) => {
+						console.debug(`im switched by ${this.setting.cmdOnInsertLeave}`);
+					},
+				);
+			});
 		} else {
 			this.runCommandAsync(this.setting.cmdOnInsertLeave).then(
 				(_stdout: any) => {
-					console.debug(
-						`im switched by ${this.setting.cmdOnInsertLeave}`
-					);
-				}
+					console.debug(`im switched by ${this.setting.cmdOnInsertLeave}`);
+				},
 			);
 		}
 	}
@@ -235,9 +231,7 @@ export default class VimImSwitcher extends Plugin {
 
 		if (this.isOnInsertEnterEnabled()) {
 			// if onInsertEnter is enabled, we need to get current IM first
-			this.imToRestore = this.runCommandSync(
-				this.setting.cmdGetCurrentIM
-			);
+			this.imToRestore = this.runCommandSync(this.setting.cmdGetCurrentIM);
 			console.debug(`im cached: ${this.imToRestore}`);
 		}
 
@@ -251,7 +245,7 @@ export default class VimImSwitcher extends Plugin {
 			exec(command, (error: any, stdout: any, stderr: any) => {
 				if (error) {
 					this.logError(
-						`command failed with error: ${error}, stdout: ${stdout}, stderr: ${stderr}`
+						`command failed with error: ${error}, stdout: ${stdout}, stderr: ${stderr}`,
 					);
 					reject(error);
 					return;
@@ -288,11 +282,7 @@ export default class VimImSwitcher extends Plugin {
 	onunload() {}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData()
-		);
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
 
 	async saveSettings() {
@@ -317,33 +307,33 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 			"You can set the following four settings for each platform. \
 			If you want to use the `InsertEnter` command, \
 			you should also set the `Get Current IM` command to restore the state of IM. \
-			If you leave blank either of them, `InsertEnter` will be skipped."
+			If you leave blank either of them, `InsertEnter` will be skipped.",
 		);
 
 		containerEl.createEl("h3", { text: "macOS" });
 		this.createSettingForOS(
 			containerEl,
 			this.plugin.settings.macos,
-			DEFAULT_SETTINGS.macos
+			DEFAULT_SETTINGS.macos,
 		);
 
 		containerEl.createEl("h3", { text: "Windows" });
 		this.createSettingForOS(
 			containerEl,
 			this.plugin.settings.windows,
-			DEFAULT_SETTINGS.windows
+			DEFAULT_SETTINGS.windows,
 		);
 
 		containerEl.createEl("h3", { text: "Linux" });
 		new Setting(containerEl).setDesc(
 			"WARN: This plugin doesn't work with Obsidian installed from Snap or Flatpak. \
 			Please try `AppImage` or `deb` file. \
-			If you want to use `ibus` or `fcitx-remote`, please refere README on GitHub repo."
+			If you want to use `ibus` or `fcitx-remote`, please refere README on GitHub repo.",
 		);
 		this.createSettingForOS(
 			containerEl,
 			this.plugin.settings.linux,
-			DEFAULT_SETTINGS.linux
+			DEFAULT_SETTINGS.linux,
 		);
 
 		containerEl.createEl("h3", { text: "Common" });
@@ -375,7 +365,7 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 	private createSettingForOS(
 		containerEl: HTMLElement,
 		setting: VimImControSetting,
-		defaults: VimImControSetting
+		defaults: VimImControSetting,
 	) {
 		new Setting(containerEl)
 			.setName("PATH to IM Controller")
@@ -388,7 +378,7 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 						console.debug(`PATH to IM Controller: ${value}`);
 						setting.pathToIMControl = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -402,13 +392,13 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 						console.debug("Get Current IM: " + value);
 						setting.cmdGetCurrentIM = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
 			.setName("On InsertEnter")
 			.setDesc(
-				"The command when entering insert mode (Use {{im}} as placeholder of cached IM)"
+				"The command when entering insert mode (Use {{im}} as placeholder of cached IM)",
 			)
 			.addText((text) =>
 				text
@@ -418,7 +408,7 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 						console.debug("On InsertEnter: " + value);
 						setting.cmdOnInsertEnter = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 
 		new Setting(containerEl)
@@ -432,7 +422,7 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 						console.debug("On InsertLeave: " + value);
 						setting.cmdOnInsertLeave = value;
 						await this.plugin.saveSettings();
-					})
+					}),
 			);
 	}
 }
