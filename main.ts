@@ -70,6 +70,21 @@ export default class VimImSwitcher extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-open", this.registerWorkspaceEvent),
 		);
+
+		// Listen for vim-mode-changed events from any plugin (e.g. non-MarkdownView editors).
+		// This allows third-party plugins with standalone CodeMirror vim editors to
+		// trigger IME switching by firing: app.workspace.trigger("vim-mode-changed", { mode })
+		this.registerEvent(
+			(this.app.workspace as any).on(
+				"vim-mode-changed",
+				async (modeObj: { mode: string }) => {
+					if (!this.isInitialized) {
+						await this.initialize();
+					}
+					this.onVimModeChanged(modeObj);
+				},
+			),
+		);
 	}
 
 	private async initialize() {
@@ -128,7 +143,9 @@ export default class VimImSwitcher extends Plugin {
 		}
 
 		// run commands when vim mode has changed
-		editor.on("vim-mode-change", (modeObj: any) => {
+		// "vim-mode-change" is not in CodeMirror's type definitions but is
+		// fired by the vim extension at runtime.
+		(editor as any).on("vim-mode-change", (modeObj: { mode: string }) => {
 			if (modeObj) {
 				this.onVimModeChanged(modeObj);
 			}
