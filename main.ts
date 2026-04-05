@@ -32,8 +32,8 @@ const DEFAULT_SETTINGS: VimImControlSettings = {
 	linux: {
 		pathToIMControl: "/usr/bin",
 		cmdOnInsertLeave: "fcitx5-remote -c",
-		cmdOnInsertEnter: "fcitx5-remote -o",
-		cmdGetCurrentIM: "fcitx5-remote",
+		cmdOnInsertEnter: "fcitx5-remote {{im}}",
+		cmdGetCurrentIM: "fcitx5-remote | sed 's/^2$/-o/;s/^1$/-c/'",
 	},
 	isAsync: true,
 	isStatusBarEnabled: false,
