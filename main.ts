@@ -32,8 +32,8 @@ const DEFAULT_SETTINGS: VimImControlSettings = {
 	linux: {
 		pathToIMControl: "/usr/bin",
 		cmdOnInsertLeave: "fcitx5-remote -c",
-		cmdOnInsertEnter: "fcitx5-remote -o",
-		cmdGetCurrentIM: "fcitx5-remote",
+		cmdOnInsertEnter: "fcitx5-remote {{im}}",
+		cmdGetCurrentIM: "fcitx5-remote | sed 's/^2$/-o/;s/^1$/-c/'",
 	},
 	isAsync: true,
 	isStatusBarEnabled: false,
@@ -220,7 +220,7 @@ export default class VimImSwitcher extends Plugin {
 		if (this.isOnInsertEnterEnabled()) {
 			// if onInsertEnter is enabled, we need to get current IM first
 			this.runCommandAsync(this.setting.cmdGetCurrentIM).then((stdout: any) => {
-				this.imToRestore = stdout;
+				this.imToRestore = stdout.toString().trim();
 				console.debug(`im cached: ${this.imToRestore}`);
 
 				// then run onInsertLeave command
@@ -248,7 +248,7 @@ export default class VimImSwitcher extends Plugin {
 
 		if (this.isOnInsertEnterEnabled()) {
 			// if onInsertEnter is enabled, we need to get current IM first
-			this.imToRestore = this.runCommandSync(this.setting.cmdGetCurrentIM);
+			this.imToRestore = this.runCommandSync(this.setting.cmdGetCurrentIM).trim();
 			console.debug(`im cached: ${this.imToRestore}`);
 		}
 
