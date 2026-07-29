@@ -191,6 +191,13 @@ For Linux, this plugin does **NOT** support Obsidian installed from Snap or Flat
 -   [Obsidian Vim IM Select Plugin](https://github.com/ALONELUR/vim-im-select-obsidian)
 -   [Obsidian Vim IM Switch Plugin](https://github.com/yuanotes/obsidian-vim-im-switch-plugin)
 
+## Acknowledgements
+
+The fork's fixes (env-var expansion, mode-change debounce, the `imectl` Korean
+IME helper, and this documentation) were developed with the help of
+[Claude Code](https://claude.com/claude-code). 이 fork의 수정 사항은
+Claude Code의 도움을 받아 작성되었습니다.
+
 ## LICENSE
 
 MIT
