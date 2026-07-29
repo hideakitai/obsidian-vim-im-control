@@ -58,10 +58,17 @@ export default class VimImSwitcher extends Plugin {
 	// internal state for the plugin
 	private isInitialized = false;
 	private imToRestore = "";
-	private prevVimMode = "normal";
+	// Whether the last *settled* vim mode was insert. IM commands only run
+	// when this crosses the insert boundary.
+	private isInsertMode = false;
+	// Debounce state: a single command (e.g. `o`/`O`) can emit a burst of
+	// mode-change events in one tick; we only react to the settled mode.
+	private pendingMode: string | null = null;
+	private modeChangeTimer: ReturnType<typeof setTimeout> | null = null;
 	private editorSet = new WeakSet<CodeMirror.Editor>();
 
 	async onload() {
+		console.debug("vim-im-control-rev loaded (mode-change debounce enabled)");
 		await this.loadSettings();
 
 		this.addSettingTab(new VimImSwitcherSettingTab(this.app, this));
@@ -120,7 +127,7 @@ export default class VimImSwitcher extends Plugin {
 		this.updateEnvironmentVariableForProcess();
 		this.statusBarItemEl.setText("");
 		this.imToRestore = "";
-		this.prevVimMode = "normal";
+		this.isInsertMode = false;
 		this.isInitialized = true;
 	}
 
@@ -216,19 +223,32 @@ export default class VimImSwitcher extends Plugin {
 	}
 
 	private onVimModeChanged(modeObj: any) {
-		// Only act on real transitions across the insert-mode boundary.
-		// Some vim commands (e.g. `o`/`O`) fire the "insert" mode-change event
-		// more than once; without this guard onInsertEnter would run twice and
-		// the IM would be switched repeatedly.
-		const isInsert = modeObj.mode === "insert";
-		const wasInsert = this.prevVimMode === "insert";
-		this.prevVimMode = modeObj.mode;
-
-		if (isInsert === wasInsert) {
-			// No insert-boundary transition (duplicate event, or a move such as
-			// normal <-> visual); nothing to do for IM control.
+		if (!modeObj || typeof modeObj.mode !== "string") {
 			return;
 		}
+
+		// Debounce: some vim commands (e.g. `o`/`O`) emit several mode-change
+		// events in a single tick (insert -> normal -> insert). Reacting to each
+		// one fires racing async IM commands and can leave the IM stuck in the
+		// wrong state. Instead we remember the latest mode and only act once the
+		// burst has settled.
+		this.pendingMode = modeObj.mode;
+		if (this.modeChangeTimer !== null) {
+			clearTimeout(this.modeChangeTimer);
+		}
+		this.modeChangeTimer = setTimeout(() => {
+			this.modeChangeTimer = null;
+			this.applyVimMode(this.pendingMode as string);
+		}, 30);
+	}
+
+	private applyVimMode(mode: string) {
+		// Only act on a real transition across the insert-mode boundary.
+		const isInsert = mode === "insert";
+		if (isInsert === this.isInsertMode) {
+			return;
+		}
+		this.isInsertMode = isInsert;
 
 		if (isInsert) {
 			this.onInsertEnter();
@@ -354,7 +374,12 @@ export default class VimImSwitcher extends Plugin {
 		}
 	}
 
-	onunload() {}
+	onunload() {
+		if (this.modeChangeTimer !== null) {
+			clearTimeout(this.modeChangeTimer);
+			this.modeChangeTimer = null;
+		}
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
