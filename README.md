@@ -6,6 +6,8 @@ Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supp
 >
 > - Environment variables such as `%USERPROFILE%` (Windows) or `$HOME` (POSIX) in **PATH to IM Controller** are now expanded. On the original, the default Windows path (`%USERPROFILE%\AppData\Local\bin`) was inserted into `PATH` verbatim and never resolved, so every IM command failed with `'im-select.exe' is not recognized...`.
 > - The plugin's **own folder is added to `PATH`**, so an IM controller executable placed next to `main.js` is found without any absolute path. This fork ships `im-select.exe`, so on Windows it works out of the box and travels with your vault.
+>
+> This fork uses a distinct plugin id (`vim-im-control-rev`), so it can be installed alongside the original without conflicting. **Do not enable both at the same time** — both react to the same vim-mode-change event and would switch the IM twice. Keep only one enabled.
 
 ## Build & Deploy
 
@@ -24,7 +26,7 @@ npm run build   # produces main.js
 
 ### 2. Copy the files into your vault
 
-Copy the following into `<your-vault>/.obsidian/plugins/vim-im-control/` (create the folder if it does not exist):
+Copy the following into `<your-vault>/.obsidian/plugins/vim-im-control-rev/` (create the folder if it does not exist):
 
 | File | Notes |
 | --- | --- |

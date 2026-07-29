@@ -1,5 +1,5 @@
 {
-	"name": "obsidian-vim-im-control",
+	"name": "obsidian-vim-im-control-rev",
 	"version": "0.2.0",
 	"description": "Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supports macOS, Windows, and Linux.",
 	"main": "main.js",

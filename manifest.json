@@ -1,6 +1,6 @@
 {
-	"id": "vim-im-control",
-	"name": "Vim IM Control",
+	"id": "vim-im-control-rev",
+	"name": "Vim IM Control (rev)",
 	"version": "0.2.0",
 	"minAppVersion": "0.15.3",
 	"description": "Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supports macOS, Windows, and Linux.",
