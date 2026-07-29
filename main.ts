@@ -24,6 +24,24 @@ interface VimImControlSettings {
 	isStatusBarEnabled: boolean;
 }
 
+// Windows preset using im-select (switches the keyboard layout / HKL).
+const WINDOWS_IMSELECT: VimImControSetting = {
+	pathToIMControl: "%USERPROFILE%\\AppData\\Local\\bin",
+	cmdOnInsertLeave: "im-select.exe 1033",
+	cmdOnInsertEnter: "im-select.exe {{im}}",
+	cmdGetCurrentIM: "im-select.exe",
+};
+
+// Windows preset for the Korean IME using the bundled imectl (toggles the IME
+// conversion mode: 1 = Hangul, 0 = English). Left PATH blank because imectl.exe
+// ships next to main.js and is already on PATH via the plugin's own folder.
+const WINDOWS_IMECTL: VimImControSetting = {
+	pathToIMControl: "",
+	cmdOnInsertLeave: "imectl.exe 0",
+	cmdOnInsertEnter: "imectl.exe {{im}}",
+	cmdGetCurrentIM: "imectl.exe",
+};
+
 const DEFAULT_SETTINGS: VimImControlSettings = {
 	macos: {
 		pathToIMControl: "/opt/homebrew/bin",
@@ -31,12 +49,7 @@ const DEFAULT_SETTINGS: VimImControlSettings = {
 		cmdOnInsertEnter: "im-select {{im}}",
 		cmdGetCurrentIM: "im-select",
 	},
-	windows: {
-		pathToIMControl: "%USERPROFILE%\\AppData\\Local\\bin",
-		cmdOnInsertLeave: "im-select.exe 1033",
-		cmdOnInsertEnter: "im-select.exe {{im}}",
-		cmdGetCurrentIM: "im-select.exe",
-	},
+	windows: { ...WINDOWS_IMSELECT },
 	linux: {
 		pathToIMControl: "/usr/bin",
 		cmdOnInsertLeave: "fcitx5-remote -c",
@@ -418,6 +431,31 @@ class VimImSwitcherSettingTab extends PluginSettingTab {
 		);
 
 		containerEl.createEl("h3", { text: "Windows" });
+		const win = this.plugin.settings.windows;
+		const isKoreanPreset =
+			win.cmdGetCurrentIM === WINDOWS_IMECTL.cmdGetCurrentIM &&
+			win.cmdOnInsertLeave === WINDOWS_IMECTL.cmdOnInsertLeave &&
+			win.cmdOnInsertEnter === WINDOWS_IMECTL.cmdOnInsertEnter;
+		new Setting(containerEl)
+			.setName("Korean IME (한글)")
+			.setDesc(
+				"Use the bundled imectl.exe to toggle the Korean IME's Hangul/English \
+				conversion mode, instead of im-select (which only switches the keyboard \
+				layout and cannot tell Hangul from English inside the Korean IME). \
+				Turning this on/off fills the Windows fields below with the matching \
+				preset. Requires 'Use previous version of Microsoft IME' on Windows 10/11.",
+			)
+			.addToggle((toggle) => {
+				toggle.setValue(isKoreanPreset);
+				toggle.onChange(async (value) => {
+					Object.assign(
+						this.plugin.settings.windows,
+						value ? WINDOWS_IMECTL : WINDOWS_IMSELECT,
+					);
+					await this.plugin.saveSettings();
+					this.display(); // refresh the text fields below
+				});
+			});
 		this.createSettingForOS(
 			containerEl,
 			this.plugin.settings.windows,

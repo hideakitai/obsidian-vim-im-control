@@ -82,7 +82,10 @@ layout (`1033`) instead leaves you stuck in a layout where the 한/영 key does
 nothing until you fix it from the tray.
 
 Use the bundled **`imectl.exe`** instead, which drives the conversion mode
-directly (`1` = Hangul, `0` = English):
+directly (`1` = Hangul, `0` = English). The easiest way is the **Korean IME
+(한글)** toggle at the top of the Windows settings — turning it on fills the
+Windows fields with the preset below (and turning it off restores the im-select
+preset):
 
 ```
 PATH to IM Controller: (leave blank — imectl.exe ships next to main.js)
