@@ -1,5 +1,13 @@
-import { App, MarkdownView, Plugin, PluginSettingTab, Setting } from "obsidian";
+import {
+	App,
+	FileSystemAdapter,
+	MarkdownView,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+} from "obsidian";
 import * as os from "os";
+import * as path from "path";
 import { exec, execSync } from "child_process";
 
 interface VimImControSetting {
@@ -118,8 +126,53 @@ export default class VimImSwitcher extends Plugin {
 
 	private updateEnvironmentVariableForProcess() {
 		const delimiter = process.platform === "win32" ? ";" : ":";
-		process.env.PATH = `${process.env.PATH}${delimiter}${this.setting.pathToIMControl}`;
+		const extraPaths: string[] = [];
+
+		// 1. Directory of this plugin itself. If an IM controller executable
+		//    (e.g. im-select.exe) is bundled next to main.js, it travels with
+		//    the plugin/vault and can be resolved without any absolute path.
+		const pluginDir = this.getPluginDir();
+		if (pluginDir) {
+			extraPaths.push(pluginDir);
+		}
+
+		// 2. User-configured PATH. Environment variables such as %USERPROFILE%
+		//    (Windows) or $HOME (POSIX) are NOT expanded when embedded inside
+		//    process.env.PATH, so expand them manually before appending.
+		const configured = this.expandEnvVars(this.setting.pathToIMControl);
+		if (configured) {
+			extraPaths.push(configured);
+		}
+
+		process.env.PATH = [process.env.PATH, ...extraPaths].join(delimiter);
 		console.debug(`current process PATH updated: ${process.env.PATH}`);
+	}
+
+	// Absolute path to this plugin's directory (…/.obsidian/plugins/<id>).
+	// Returns null when the vault is not on a regular filesystem.
+	private getPluginDir(): string | null {
+		const adapter = this.app.vault.adapter;
+		if (adapter instanceof FileSystemAdapter && this.manifest.dir) {
+			return path.join(adapter.getBasePath(), this.manifest.dir);
+		}
+		return null;
+	}
+
+	// Expand %VAR% (Windows) and $VAR (POSIX) references in a path string.
+	private expandEnvVars(input: string): string {
+		if (!input) {
+			return input;
+		}
+		if (process.platform === "win32") {
+			return input.replace(
+				/%([^%]+)%/g,
+				(match, name) => process.env[name] ?? match,
+			);
+		}
+		return input.replace(
+			/\$(\w+)/g,
+			(match, name) => process.env[name] ?? match,
+		);
 	}
 
 	private registerWorkspaceEvent = async () => {
