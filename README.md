@@ -7,7 +7,7 @@ Control Input Method (IM) when `InsertLeave` and `InsertEnter` in Vim mode. Supp
 > - Environment variables such as `%USERPROFILE%` (Windows) or `$HOME` (POSIX) in **PATH to IM Controller** are now expanded. On the original, the default Windows path (`%USERPROFILE%\AppData\Local\bin`) was inserted into `PATH` verbatim and never resolved, so every IM command failed with `'im-select.exe' is not recognized...`.
 > - The plugin's **own folder is added to `PATH`**, so an IM controller executable placed next to `main.js` is found without any absolute path. This fork ships `im-select.exe`, so on Windows it works out of the box and travels with your vault.
 > - **Mode-change events are debounced.** Commands like `o`/`O`/`cc` emit a burst of vim mode-change events in one tick, which fired racing async IM commands and left the IM stuck (usually forced to the InsertLeave value). The plugin now reacts only to the settled mode.
-> - **Korean IME support** via a bundled `imectl.exe`. `im-select` only switches the keyboard layout (HKL), so it cannot toggle Hangul/English *inside* the single Korean IME (`1042`). `imectl` drives the IME conversion mode instead — see [Korean IME (Hangul) on Windows](#korean-ime-hangul-on-windows).
+> - **Korean IME support** via a bundled `imectl.exe`. `im-select` only switches the keyboard layout (HKL), so it cannot toggle Hangul/English *inside* the single Korean IME (`1042`). `imectl` drives the IME conversion mode instead — see [Korean IME (Hangul) on Windows](#korean-ime-hangul-on-windows). 🇰🇷 한글 사용자는 [한국어 IME(한글) 설정 안내](#한국어-ime한글-설정-안내)를 참고하세요.
 >
 > This fork uses a distinct plugin id (`vim-im-control-rev`), so it can be installed alongside the original without conflicting. **Do not enable both at the same time** — both react to the same vim-mode-change event and would switch the IM twice. Keep only one enabled.
 
@@ -104,6 +104,43 @@ newer TSF IME ignores the `WM_IME_CONTROL` message `imectl` relies on.
 
 `imectl` is a ~40-line C program; its source and build instructions are in
 [`imectl/`](imectl/).
+
+#### 한국어 IME(한글) 설정 안내
+
+Windows에서 Vim 모드로 한글을 쓸 때, `im-select`만으로는 한/영 전환이 제대로
+되지 않습니다. 이유는 다음과 같습니다.
+
+- `im-select`는 **키보드 레이아웃(HKL)** 만 바꿉니다.
+- 한국어 MS IME는 **하나의 입력 소스(`1042`)** 이고, 한/영 토글은 레이아웃이
+  아니라 IME 내부의 **변환 모드(conversion mode)** 입니다. 그래서 `im-select`는
+  한글이든 영문이든 똑같이 `1042`로만 보고하며, 둘을 구분하거나 전환하지
+  못합니다.
+- 대신 별도 영어 레이아웃(`1033`)으로 강제하면, 한/영 키가 안 먹는 레이아웃에
+  갇혀서 트레이로 직접 바꿔야 하는 상황이 됩니다.
+
+이 저장소에 포함된 **`imectl.exe`** 를 쓰면 변환 모드를 직접 제어합니다
+(`1` = 한글, `0` = 영문). 가장 쉬운 방법은 Windows 설정 맨 위의 **Korean IME
+(한글)** 토글을 켜는 것입니다. 켜면 아래 프리셋이 자동으로 채워지고, 끄면
+`im-select` 프리셋으로 되돌아갑니다.
+
+```
+PATH to IM Controller: (비워 둠 — imectl.exe가 main.js 옆에 함께 배포됨)
+On InsertLeave: "imectl.exe 0",
+On InsertEnter: "imectl.exe {{im}}",
+Get Current IM: "imectl.exe",
+```
+
+이렇게 하면 insert 모드를 나갈 때 IME가 영문으로 바뀌어 Vim 명령이 정상
+동작하고, 다시 insert로 들어오면 직전의 한/영 상태로 복원됩니다. 모두 기존
+한국어 IME 안에서 이뤄지므로 한/영 키도 평소처럼 그대로 쓸 수 있습니다.
+
+**필수 조건:** **"이전 버전의 Microsoft IME 사용"** 을 켜야 합니다
+(설정 → 시간 및 언어 → 언어 및 지역 → 한국어 → 언어 옵션 → Microsoft IME →
+옵션 → 호환성 → *이전 버전의 Microsoft IME 사용*). Windows 10/11의 새 TSF IME는
+`imectl`이 사용하는 `WM_IME_CONTROL` 메시지를 무시합니다.
+
+`imectl`은 약 40줄짜리 C 프로그램이며, 소스와 빌드 방법은
+[`imectl/`](imectl/) 에 있습니다.
 
 ### Linux
 
