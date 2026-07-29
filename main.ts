@@ -216,22 +216,27 @@ export default class VimImSwitcher extends Plugin {
 	}
 
 	private onVimModeChanged(modeObj: any) {
-		switch (modeObj.mode) {
-			case "insert":
-				this.onInsertEnter();
-				break;
-			default:
-				if (this.prevVimMode != "insert") {
-					break;
-				}
-				if (this.settings.isAsync) {
-					this.onInsertLeaveAsync();
-				} else {
-					this.onInsertLeaveSync();
-				}
-				break;
-		}
+		// Only act on real transitions across the insert-mode boundary.
+		// Some vim commands (e.g. `o`/`O`) fire the "insert" mode-change event
+		// more than once; without this guard onInsertEnter would run twice and
+		// the IM would be switched repeatedly.
+		const isInsert = modeObj.mode === "insert";
+		const wasInsert = this.prevVimMode === "insert";
 		this.prevVimMode = modeObj.mode;
+
+		if (isInsert === wasInsert) {
+			// No insert-boundary transition (duplicate event, or a move such as
+			// normal <-> visual); nothing to do for IM control.
+			return;
+		}
+
+		if (isInsert) {
+			this.onInsertEnter();
+		} else if (this.settings.isAsync) {
+			this.onInsertLeaveAsync();
+		} else {
+			this.onInsertLeaveSync();
+		}
 	}
 
 	private isOnInsertEnterEnabled() {
